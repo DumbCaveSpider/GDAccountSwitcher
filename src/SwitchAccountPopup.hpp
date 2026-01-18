@@ -18,6 +18,7 @@ class SwitchAccountPopup : public geode::Popup<> {
      private:
       void onAdd(CCObject* sender);
       void onSelect(CCObject* sender);
+      void onInfo(CCObject* sender);
       void addAccountRow(const std::string& username, const std::string& gjp2, bool isCurrent = false);
 
       // per-row select buttons

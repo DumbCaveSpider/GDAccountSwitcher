@@ -11,6 +11,15 @@
 	"version": "v1.0.0",
 	"developer": "ArcticWoof",
 	"description": "Switch between your GD accounts",
+	"links": {
+        "source": "https://github.com/DumbCaveSpider/GDAccountSwitcher",
+        "homepage": "https://arcticwoof.xyz/",
+        "community": "https://discord.gg/invite/gXcppxTNxC"
+    },
+	"tags": [
+		"online",
+		"enhancement"
+	], 
 	"dependencies": {
 		"geode.node-ids": {
 			"importance": "required",

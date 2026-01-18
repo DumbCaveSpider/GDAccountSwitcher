@@ -91,16 +91,28 @@ bool SwitchAccountPopup::setup() {
           this,
           menu_selector(SwitchAccountPopup::onAdd));
       m_buttonMenu->addChild(addBtn);
-      addBtn->setPosition({m_mainLayer->getContentSize().width / 2 - 60, 25.f});
+      addBtn->setPosition({m_mainLayer->getContentSize().width / 2 + 50, 25.f});
 
       // cancel button
       auto cancelBtn = CCMenuItemSpriteExtra::create(
-          ButtonSprite::create("Cancel", "goldFont.fnt", "GJ_button_01.png"),
+          ButtonSprite::create("Cancel", "goldFont.fnt", "GJ_button_06.png"),
           this,
           menu_selector(SwitchAccountPopup::onClose));
       m_buttonMenu->addChild(cancelBtn);
-      cancelBtn->setPosition({m_mainLayer->getContentSize().width / 2 + 50, 25.f});
+      cancelBtn->setPosition({m_mainLayer->getContentSize().width / 2 - 50, 25.f});
+
+      // info button
+      auto infoBtn = CCMenuItemSpriteExtra::create(
+          CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+          this,
+          menu_selector(SwitchAccountPopup::onInfo));
+      m_buttonMenu->addChild(infoBtn);
+      infoBtn->setPosition({m_mainLayer->getContentSize().width - 20.f, m_mainLayer->getContentSize().height - 20.f});
       return true;
+}
+
+void SwitchAccountPopup::onInfo(CCObject* sender) {
+      FLAlertLayer::create("How to use", "Login to your current account in GD, then click <cg>Add</c> to store it locally.\n\nTo switch accounts, simply click the <cg>Select</c> button next to the desired account. The game will <cr>log out</c> and log back in automatically.", "OK")->show();
 }
 
 void SwitchAccountPopup::addAccountRow(const std::string& username, const std::string& gjp2, bool toggleDefault) {
