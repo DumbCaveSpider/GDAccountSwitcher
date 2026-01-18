@@ -18,11 +18,13 @@ class SwitchAccountPopup : public geode::Popup<> {
      private:
       void onAdd(CCObject* sender);
       void onSelect(CCObject* sender);
+      void onDelete(CCObject* sender);
       void onInfo(CCObject* sender);
       void addAccountRow(const std::string& username, const std::string& gjp2, bool isCurrent = false);
 
       // per-row select buttons
       std::vector<CCMenuItemSpriteExtra*> m_selectButtons;
+      std::vector<CCMenuItemSpriteExtra*> m_deleteButtons;
       std::vector<std::string> m_usernames;
       std::vector<std::string> m_gjp2s;
 

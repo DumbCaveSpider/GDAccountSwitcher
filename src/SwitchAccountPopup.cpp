@@ -91,7 +91,7 @@ bool SwitchAccountPopup::setup() {
           this,
           menu_selector(SwitchAccountPopup::onAdd));
       m_buttonMenu->addChild(addBtn);
-      addBtn->setPosition({m_mainLayer->getContentSize().width / 2 + 50, 25.f});
+      addBtn->setPosition({m_mainLayer->getContentSize().width / 2 + 70, 25.f});
 
       // cancel button
       auto cancelBtn = CCMenuItemSpriteExtra::create(
@@ -112,7 +112,7 @@ bool SwitchAccountPopup::setup() {
 }
 
 void SwitchAccountPopup::onInfo(CCObject* sender) {
-      FLAlertLayer::create("How to use", "Login to your current account in GD, then click <cg>Add</c> to store it locally.\n\nTo switch accounts, simply click the <cg>Select</c> button next to the desired account. The game will <cr>log out</c> and log back in automatically.", "OK")->show();
+      FLAlertLayer::create("How to use", "Login to your <cy>current account</c>, then click <cg>Add</c> to store it locally.\n\nTo switch accounts, simply click the <cg>Select</c> button next to the desired account. The game will <cr>log out your current account</c> and <cg>log back in to the selected account</c> automatically.", "OK")->show();
 }
 
 void SwitchAccountPopup::addAccountRow(const std::string& username, const std::string& gjp2, bool toggleDefault) {
@@ -127,9 +127,18 @@ void SwitchAccountPopup::addAccountRow(const std::string& username, const std::s
       row->addChild(rowColor, -1);
 
       auto label = CCLabelBMFont::create(username.c_str(), "goldFont.fnt");
-      label->setAnchorPoint({0.0f, 1.0f});
-      label->setPosition({10.f, row->getContentSize().height - 10.f});
+      label->setAnchorPoint({0.0f, 0.5f});
+      label->setScale(0.9f);
+      label->setPosition({15.f, row->getContentSize().height / 2});
       row->addChild(label);
+
+      // create delete button sprite
+      auto delSpr = CCSprite::createWithSpriteFrameName("GJ_deleteSongBtn_001.png");
+      auto delBtn = CCMenuItemSpriteExtra::create(delSpr, this, menu_selector(SwitchAccountPopup::onDelete));
+      auto dmenu = CCMenu::create(delBtn, nullptr);
+      dmenu->setPosition({row->getContentSize().width - 80.f, row->getContentSize().height / 2});
+      dmenu->setAnchorPoint({0.f, 0.5f});
+      row->addChild(dmenu);
 
       // create select button sprites
       auto normalSpr = CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png");
@@ -143,6 +152,7 @@ void SwitchAccountPopup::addAccountRow(const std::string& username, const std::s
       // assign index before pushing
       size_t index = m_selectButtons.size();
       m_selectButtons.push_back(selectBtn);
+      m_deleteButtons.push_back(delBtn);
       m_usernames.push_back(username);
       m_gjp2s.push_back(gjp2);
 
@@ -150,10 +160,12 @@ void SwitchAccountPopup::addAccountRow(const std::string& username, const std::s
       if (toggleDefault) {
             selectBtn->setSprite(onSpr);
             selectBtn->setEnabled(false);
+            delBtn->setEnabled(false);  // don't allow deleting current logged-in account
             m_currentAccountIndex = index;
       } else {
             selectBtn->setSprite(normalSpr);
             selectBtn->setEnabled(true);
+            delBtn->setEnabled(true);
       }
 
       m_listLayer->m_contentLayer->addChild(row);
@@ -341,9 +353,9 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
       gd::string gjp2 = m_gjp2s.size() > idx ? m_gjp2s[idx] : "";
 
       {
-            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + username + "</c>'?";
+            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + username + "</c>'?\n<cy>This will log out your current account and log in to the selected account.</c>\n<cr>Be sure to save your current account's data before switching!</c>";
             createQuickPopup("Switch Account", msg,
-                             "No", "Switch", [this, idx, username, gjp2](FLAlertLayer* /*popup*/, bool yes) {
+                             "No", "Switch", [this, idx, username, gjp2](FLAlertLayer*, bool yes) {
                                    if (!yes) return;
 
                                    // perform UI update: previous current -> normal and enabled
@@ -377,4 +389,104 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
                                    Notification::create(std::string("Switched to ") + username, NotificationIcon::Success)->show();
                              });
       }
+}
+
+void SwitchAccountPopup::onDelete(CCObject* sender) {
+      auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (!btn) return;
+
+      // find index
+      size_t idx = SIZE_MAX;
+      for (size_t i = 0; i < m_deleteButtons.size(); ++i) {
+            if (m_deleteButtons[i] == btn) {
+                  idx = i;
+                  break;
+            }
+      }
+      if (idx == SIZE_MAX) return;
+
+      gd::string username = m_usernames.size() > idx ? m_usernames[idx] : "";
+
+      std::string msg = std::string("Are you sure you want to delete account '<cg>") + username + "</c>'?\n<cy>This will remove it from local storage.</c>";
+      createQuickPopup("Delete Account", msg, "No", "Delete", [this, idx, username, btn](FLAlertLayer*, bool yes) {
+            if (!yes) return;
+
+            // remove from file
+            auto path = geode::dirs::getModsSaveDir() / geode::Mod::get()->getID() / "accounts.json";
+
+            matjson::Value doc = matjson::Value::object();
+            if (auto res = geode::utils::file::readJson(path); res) {
+                  doc = res.unwrap();
+            }
+
+            matjson::Value accountsVal;
+            if (doc.contains("accounts")) {
+                  accountsVal = doc["accounts"];
+            } else {
+                  accountsVal = doc;
+            }
+
+            std::vector<matjson::Value> accounts;
+            if (accountsVal.isArray()) {
+                  if (auto r = accountsVal.as<std::vector<matjson::Value>>(); r) {
+                        accounts = r.unwrap();
+                  }
+            } else if (accountsVal.isObject()) {
+                  if (accountsVal.contains("username")) {
+                        if (auto s = accountsVal["username"].asString(); s && s.unwrap() == username) {
+                              // clear to empty array
+                              accounts.clear();
+                        }
+                  }
+            }
+
+            bool removed = false;
+            for (auto it = accounts.begin(); it != accounts.end(); ++it) {
+                  if (auto s = (*it)["username"].asString(); s && s.unwrap() == username) {
+                        accounts.erase(it);
+                        removed = true;
+                        break;
+                  }
+            }
+
+            if (!removed && accounts.empty()) {
+                  removed = true;
+            }
+
+            if (!removed) {
+                  Notification::create("Account not found in file.", NotificationIcon::Error)->show();
+                  return;
+            }
+
+            matjson::Value root = matjson::Value::object();
+            root["accounts"] = accounts;
+            if (auto r = geode::utils::file::writeToJson(path, root); !r) {
+                  Notification::create("Failed to save accounts file.", NotificationIcon::Error)->show();
+                  log::warn("Failed to write accounts file");
+                  return;
+            }
+
+            // remove from UI
+            CCNode* menu = btn->getParent();
+            CCNode* row = menu ? menu->getParent() : nullptr;
+            if (row && m_listLayer && m_listLayer->m_contentLayer) {
+                  row->removeFromParent();
+                  m_listLayer->m_contentLayer->updateLayout(true);
+            }
+
+            // remove from memory
+            if (idx < m_usernames.size()) m_usernames.erase(m_usernames.begin() + idx);
+            if (idx < m_gjp2s.size()) m_gjp2s.erase(m_gjp2s.begin() + idx);
+            if (idx < m_selectButtons.size()) m_selectButtons.erase(m_selectButtons.begin() + idx);
+            if (idx < m_deleteButtons.size()) m_deleteButtons.erase(m_deleteButtons.begin() + idx);
+
+            if (m_currentAccountIndex == idx) {
+                  m_currentAccountIndex = SIZE_MAX;
+            } else if (m_currentAccountIndex > idx) {
+                  --m_currentAccountIndex;
+            }
+
+            Notification::create(std::string("Deleted account ") + username, NotificationIcon::Success)->show();
+            log::info("Deleted account {}", username);
+      });
 }
