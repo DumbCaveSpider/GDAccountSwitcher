@@ -10,5 +10,11 @@
 	"name": "AccountSwitcher",
 	"version": "v1.0.0",
 	"developer": "ArcticWoof",
-	"description": "Switch between your GD accounts"
+	"description": "Switch between your GD accounts",
+	"dependencies": {
+		"geode.node-ids": {
+			"importance": "required",
+			"version": ">=1.0.0"
+		}
+	}
 }
