@@ -1,6 +1,7 @@
 #include "SwitchAccountPopup.hpp"
 
 #include <Geode/Geode.hpp>
+#include <functional>
 #include <matjson.hpp>
 
 using namespace geode::prelude;
@@ -92,7 +93,6 @@ bool SwitchAccountPopup::setup() {
       m_buttonMenu->addChild(addBtn);
       addBtn->setPosition({m_mainLayer->getContentSize().width / 2 - 60, 25.f});
 
-
       // cancel button
       auto cancelBtn = CCMenuItemSpriteExtra::create(
           ButtonSprite::create("Cancel", "goldFont.fnt", "GJ_button_01.png"),
@@ -110,7 +110,7 @@ void SwitchAccountPopup::addAccountRow(const std::string& username, const std::s
       row->setAnchorPoint({0, 0});
       row->setContentSize({m_listLayer->m_contentLayer->getContentSize().width, 50.f});
 
-      auto rowColor = CCLayerColor::create({50, 50, 50, 255}, row->getContentSize().width, row->getContentSize().height);
+      auto rowColor = CCLayerColor::create({130, 64, 32, 255}, row->getContentSize().width, row->getContentSize().height);
       rowColor->setAnchorPoint({0, 1});
       row->addChild(rowColor, -1);
 
@@ -245,7 +245,7 @@ void SwitchAccountPopup::onAdd(CCObject* sender) {
                                                if (foundIndex < m_gjp2s.size()) {
                                                      m_gjp2s[foundIndex] = gjp2;
                                                }
-                                               Notification::create("Overwrote account " + username, NotificationIcon::Success)->show();
+                                               Notification::create(std::string("Overwrote account ") + username, NotificationIcon::Success)->show();
                                                log::info("Overwrote account {}", username);
                                          } else {
                                                Notification::create("Account overwrite failed: verification mismatch.", NotificationIcon::Error)->show();
@@ -299,7 +299,7 @@ void SwitchAccountPopup::onAdd(CCObject* sender) {
                                          log::info("Added account {}", username);
                                          // append to UI
                                          this->addAccountRow(username, gjp2, false);
-                                         Notification::create("Added account " + username, NotificationIcon::Success)->show();
+                                         Notification::create(std::string("Added account ") + username, NotificationIcon::Success)->show();
                                    } else {
                                          Notification::create("Account add failed: verification mismatch.", NotificationIcon::Error)->show();
                                          log::warn("Account {} not found after write verification", username);
@@ -315,42 +315,54 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
       // find index
       size_t idx = SIZE_MAX;
       for (size_t i = 0; i < m_selectButtons.size(); ++i) {
-            if (m_selectButtons[i] == btn) { idx = i; break; }
+            if (m_selectButtons[i] == btn) {
+                  idx = i;
+                  break;
+            }
       }
       if (idx == SIZE_MAX) return;
 
       // if user clicked the current account, do nothing
       if (idx == m_currentAccountIndex) return;
 
-      std::string username = m_usernames.size() > idx ? m_usernames[idx] : "";
-      std::string gjp2 = m_gjp2s.size() > idx ? m_gjp2s[idx] : "";
+      gd::string username = m_usernames.size() > idx ? m_usernames[idx] : "";
+      gd::string gjp2 = m_gjp2s.size() > idx ? m_gjp2s[idx] : "";
 
-      createQuickPopup("Switch Account",
-                       "Are you sure you want to switch to account '<cg>" + username + "</c>'?",
-                       "No", "Switch", [this, idx, username, gjp2](auto, bool yes) {
-                             if (!yes) return;
+      {
+            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + username + "</c>'?";
+            createQuickPopup("Switch Account", msg,
+                             "No", "Switch", [this, idx, username, gjp2](FLAlertLayer* /*popup*/, bool yes) {
+                                   if (!yes) return;
 
-                             // perform UI update: previous current -> normal and enabled
-                             if (m_currentAccountIndex != SIZE_MAX && m_currentAccountIndex < m_selectButtons.size()) {
-                                   auto prevBtn = m_selectButtons[m_currentAccountIndex];
-                                   if (prevBtn) {
-                                         prevBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png"));
-                                         prevBtn->setEnabled(true);
+                                   // perform UI update: previous current -> normal and enabled
+                                   if (m_currentAccountIndex != SIZE_MAX && m_currentAccountIndex < m_selectButtons.size()) {
+                                         auto prevBtn = m_selectButtons[m_currentAccountIndex];
+                                         if (prevBtn) {
+                                               prevBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png"));
+                                               prevBtn->setEnabled(true);
+                                         }
                                    }
-                             }
 
-                             // set new current to on sprite and disable it
-                             if (idx < m_selectButtons.size()) {
-                                   auto newBtn = m_selectButtons[idx];
-                                   if (newBtn) {
-                                         newBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png"));
-                                         newBtn->setEnabled(false);
+                                   // set new current to on sprite and disable it
+                                   if (idx < m_selectButtons.size()) {
+                                         auto newBtn = m_selectButtons[idx];
+                                         if (newBtn) {
+                                               newBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png"));
+                                               newBtn->setEnabled(false);
+                                         }
+                                         m_currentAccountIndex = idx;
                                    }
-                                   m_currentAccountIndex = idx;
-                             }
 
-                             // TODO: actually switch account using GJAccountManager if desired
-                             log::info("Requested switch to account {}", username);
-                             Notification::create("Switched to " + username, NotificationIcon::Success)->show();
-                       });
+                                   log::info("Requested switch to account {}", username);
+
+                                   auto gjam = GJAccountManager::sharedState();
+                                   // logout current account
+                                   gjam->unlinkFromAccount();
+                                   // login to account (this will handle the syncing)
+                                   gjam->loginAccount(username, gjp2);
+                                   log::debug("{}: {} {} {}", username, gjp2, gjam->m_accountID, GameLevelManager::sharedState()->userIDForAccountID(gjam->m_accountID));
+
+                                   Notification::create(std::string("Switched to ") + username, NotificationIcon::Success)->show();
+                             });
+      }
 }

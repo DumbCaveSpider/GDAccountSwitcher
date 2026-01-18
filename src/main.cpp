@@ -27,7 +27,7 @@ class $modify(AWAccountHelpLayer, AccountHelpLayer) {
                   }
             }
 
-            auto btnSpr = ButtonSprite::create("Change Account", 162.f, true, "goldFont.fnt", "GJ_button_01.png", .0f, 1.f);
+            auto btnSpr = ButtonSprite::create("Switch Account", 162.f, true, "goldFont.fnt", "GJ_button_01.png", .0f, 1.f);
             auto btn = CCMenuItemSpriteExtra::create(
                 btnSpr,
                 this,
@@ -48,7 +48,7 @@ class $modify(AWAccountHelpLayer, AccountHelpLayer) {
             if (!Mod::get()->getSavedValue<bool>("firstLaunch")) {
                   FLAlertLayer::create(
                       "Important Notice",
-                      "This mod will required to store your <cr>GJP2 (Your GD Account Password)</c> locally in order to switch accounts.\n<cy>If you wish to not use your GJP2 in any purpose, don't use this mod!</c>",
+                      "This mod will required to store your <cr>GJP2 (Your Encrypted GD Account Password)</c> locally in order to switch accounts.\n<cy>If you wish to not use your GJP2 in any purpose, don't use this mod!</c>",
                       "OK")
                       ->show();
                   Mod::get()->setSavedValue<bool>("firstLaunch", true);
