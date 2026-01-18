@@ -20,6 +20,6 @@ class $modify(AWAccountHelpLayer, AccountHelpLayer) {
     }
 
     void onChangeAccount(CCObject* sender) {
-        log::debug("Change Account button clicked");
+        log::debug("something something");
     }
 };
