@@ -9,26 +9,29 @@ class $modify(AWAccountHelpLayer, AccountHelpLayer) {
       void customSetup() {
             AccountHelpLayer::customSetup();
 
+            // i swear why does this->m_mainLayer->getChildByIDRecursive("hide-dropdown-menu") didnt apply at all wtf
+            // im screaming in angornyy
+            // ig this works fine tho
+            CCMenu* menu = static_cast<CCMenu*>(this->m_mainLayer->getChildByIDRecursive("hide-dropdown-menu"));
+            if (!menu) {
+                  log::warn("geode said that the dropdown menu wasnt found lol");
+                  if (auto children = m_mainLayer->getChildren()) {
+                        CCObject* iterationOnASingleCCMenuThatShouldveBeenEasyToGet = nullptr;
+                        CCARRAY_FOREACH(children, iterationOnASingleCCMenuThatShouldveBeenEasyToGet) {
+                              CCNode* node = static_cast<CCNode*>(iterationOnASingleCCMenuThatShouldveBeenEasyToGet);
+                              if (auto m = typeinfo_cast<CCMenu*>(node)) {
+                                    menu = m;
+                                    break;
+                              }
+                        }
+                  }
+            }
+
             auto btnSpr = ButtonSprite::create("Change Account", 162.f, true, "goldFont.fnt", "GJ_button_01.png", .0f, 1.f);
             auto btn = CCMenuItemSpriteExtra::create(
                 btnSpr,
                 this,
                 menu_selector(AWAccountHelpLayer::onChangeAccount));
-
-            // i swear why does m_mainLayer->getChildbyID("hide-dropdown-menu") didnt apply at all wtf
-            // im screaming in angornyy
-            // ig this works fine tho
-            CCMenu* menu = nullptr;
-            if (auto children = m_mainLayer->getChildren()) {
-                  CCObject* iterationOnASingleCCMenuThatShouldveBeenEasyToGet = nullptr;
-                  CCARRAY_FOREACH(children, iterationOnASingleCCMenuThatShouldveBeenEasyToGet) {
-                        CCNode* node = static_cast<CCNode*>(iterationOnASingleCCMenuThatShouldveBeenEasyToGet);
-                        if (auto m = typeinfo_cast<CCMenu*>(node)) {
-                              menu = m;
-                              break;
-                        }
-                  }
-            }
 
             if (menu) {
                   menu->addChild(btn);
@@ -37,13 +40,6 @@ class $modify(AWAccountHelpLayer, AccountHelpLayer) {
                         backBtn->setPositionY(backBtn->getPositionY() - 20);
                   btn->setPosition({m_unlinkAccountButton->getPositionX(), m_unlinkAccountButton->getPositionY() - 45});
                   return;
-            } else {
-                  // just as a backup menu if ts doesnt work
-                  CCMenu* menuNew = CCMenu::create();
-                  m_mainLayer->addChild(menuNew);
-                  menuNew->setPosition({0, 0});
-                  menuNew->addChild(btn);
-                  btn->setPosition({m_mainLayer->getContentSize().width / 2, m_mainLayer->getContentSize().height - 265});
             }
       }
 
