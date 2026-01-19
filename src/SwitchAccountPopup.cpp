@@ -113,7 +113,7 @@ bool SwitchAccountPopup::setup() {
 }
 
 void SwitchAccountPopup::onInfo(CCObject* sender) {
-      FLAlertLayer::create("How to use", "Login to your <cy>current account</c>, then click <cg>Add</c> to store it locally.\n\nTo switch accounts, simply click the <cg>Select</c> button next to the desired account. The game will <cr>log out your current account</c> and <cg>log back in to the selected account</c> automatically.", "OK")->show();
+      FLAlertLayer::create("How to use", "Login to your <cy>current account</c>, then click <cg>Add</c> to store it locally.\nTo switch accounts, simply click the <cg>Use</c> button next to the desired account.\nThe game will <cr>log out your current account</c> and <cg>log back in to the selected account</c> automatically.", "OK")->show();
 }
 
 void SwitchAccountPopup::addAccountRow(const std::string& username, const std::string& gjp2, bool toggleDefault) {
@@ -133,24 +133,22 @@ void SwitchAccountPopup::addAccountRow(const std::string& username, const std::s
       label->setPosition({15.f, row->getContentSize().height / 2});
       row->addChild(label);
 
-      // create delete button sprite
+      // create delete and select button sprites
       auto delSpr = CCSprite::createWithSpriteFrameName("GJ_deleteSongBtn_001.png");
       auto delBtn = CCMenuItemSpriteExtra::create(delSpr, this, menu_selector(SwitchAccountPopup::onDelete));
-      auto dmenu = CCMenu::create();
-      dmenu->addChild(delBtn);
-      dmenu->setPosition({row->getContentSize().width - 80.f, row->getContentSize().height / 2});
-      dmenu->setAnchorPoint({0.f, 0.5f});
-      row->addChild(dmenu);
 
-      // create select button sprites
       auto normalSpr = CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png");
       auto onSpr = CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png");
       auto selectBtn = CCMenuItemSpriteExtra::create(normalSpr, this, menu_selector(SwitchAccountPopup::onSelect));
-      auto smenu = CCMenu::create();
-      smenu->addChild(selectBtn);
-      smenu->setPosition({row->getContentSize().width - 30.f, row->getContentSize().height / 2});
-      smenu->setAnchorPoint({0.f, 0.5f});
-      row->addChild(smenu);
+
+      auto rowMenu = CCMenu::create();
+      rowMenu->addChild(delBtn);
+      rowMenu->addChild(selectBtn);
+      rowMenu->setPosition({row->getContentSize().width - 80.f, row->getContentSize().height / 2});
+      rowMenu->setAnchorPoint({0.f, 0.5f});
+      delBtn->setPosition({0.f, 0.f});
+      selectBtn->setPosition({50.f, 0.f});
+      row->addChild(rowMenu);
 
       // assign index before pushing
       size_t index = m_selectButtons.size();
@@ -163,13 +161,10 @@ void SwitchAccountPopup::addAccountRow(const std::string& username, const std::s
       if (toggleDefault) {
             selectBtn->setSprite(onSpr);
             selectBtn->setEnabled(false);
-            delBtn->setColor({100, 100, 100});
-            delBtn->setEnabled(false);  // don't allow deleting current logged-in account
             m_currentAccountIndex = index;
       } else {
             selectBtn->setSprite(normalSpr);
             selectBtn->setEnabled(true);
-            delBtn->setEnabled(true);
       }
 
       m_listLayer->m_contentLayer->addChild(row);
@@ -379,23 +374,30 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
                                          if (newBtn) {
                                                newBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png"));
                                                newBtn->setEnabled(false);
-                                         }
-                                         m_currentAccountIndex = idx;
-                                   }
-
-                                   log::info("switching to account {}", username);
+                                          }
+                                          m_currentAccountIndex = idx;
+                                    }
+                                    
+                                    log::info("switching to account {}", username);
+                                    account::isSwitchingAccount = true;
 
                                    auto gjam = GJAccountManager::sharedState();
-                                   // logout current account
+
+                                   // store original account info
+                                   account::originalUsername = gjam->m_username;
+                                   account::originalGJP2 = gjam->m_GJP2;
+                                   account::originalAccountID = gjam->m_accountID;
+                                   account::originalUserID = GameLevelManager::sharedState()->userIDForAccountID(gjam->m_accountID);
+                                    log::debug("stored original account: {} {} {}", account::originalUsername, account::originalGJP2, account::originalAccountID, account::originalUserID);
                                    gjam->unlinkFromAccount();
 
-                                   // mark pending switch so the login callback
-                                   account_switcher::pendingUsername = username;
-                                   account_switcher::pendingGJP2 = gjp2;
+                                   // mark pending switch so the login callback knows which account
+                                   account::pendingUsername = username;
+                                   account::pendingGJP2 = gjp2;
 
                                    gjam->loginAccount(username, gjp2);
                                    log::debug("{}: {} {} {}", username, gjp2, gjam->m_accountID, GameLevelManager::sharedState()->userIDForAccountID(gjam->m_accountID));
-                                   Notification::create(std::string("Switched to ") + username, NotificationIcon::Success)->show();
+
                                    
                              });
       }

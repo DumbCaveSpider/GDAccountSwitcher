@@ -9,16 +9,32 @@ using namespace geode::utils;
 class $modify(AWGJAccountManager, GJAccountManager) {
      public:
       void onLoginAccountCompleted(gd::string response, gd::string tag) {
+
+            std::string originalUsername = account::originalUsername;
+            std::string originalGJP2 = account::originalGJP2;
+            int originalAccountID = account::originalAccountID;
+            int originalUserID = account::originalUserID;
+            bool isSwitchingAccount = account::isSwitchingAccount;
+
+            log::debug("Original account before switch: username={} gjp2={} accountID={} userID={}",
+                  originalUsername,
+                  originalGJP2,
+                  originalAccountID,
+                  originalUserID);
             GJAccountManager::onLoginAccountCompleted(response, tag);
 
+            if (!isSwitchingAccount) return; // treat like a normal login if not switching
+            
             // for debugging
             log::debug("login complete response: {}", response);
 
             bool linked = false;
             std::string s = response;
-            const char* tagChar = tag.c_str();
 
             geode::utils::string::trim(s);
+
+            std::string chosenUsername = "";
+            std::string chosenGJP2 = "";
 
             auto pos = s.find(',');
             if (pos != std::string::npos) {
@@ -54,14 +70,13 @@ class $modify(AWGJAccountManager, GJAccountManager) {
                         }
                   }
 
-                  std::string chosenUsername = "";
-                  std::string chosenGJP2 = "";
+                  chosenUsername = "";
+                  chosenGJP2 = "";
 
-                  //pending switch request
-                  if (!account_switcher::pendingUsername.empty()) {
-                        chosenUsername = account_switcher::pendingUsername;
-                        if (!account_switcher::pendingGJP2.empty()) {
-                              chosenGJP2 = account_switcher::pendingGJP2;
+                  if (!account::pendingUsername.empty()) {
+                        chosenUsername = account::pendingUsername;
+                        if (!account::pendingGJP2.empty()) {
+                              chosenGJP2 = account::pendingGJP2;
                         } else {
                               // try to find gjp2 from file by matching username
                               for (auto const& a : accounts) {
@@ -72,28 +87,91 @@ class $modify(AWGJAccountManager, GJAccountManager) {
                               }
                         }
                         // clear pending values after consuming
-                        account_switcher::pendingUsername.clear();
-                        account_switcher::pendingGJP2.clear();
-                  }
-
-                  // revert to the original account if still empty
-                  if (chosenUsername.empty()) {
+                        account::pendingUsername.clear();
+                        account::pendingGJP2.clear();
+                  } else if (!account::originalUsername.empty()) {
+                        // revert attempt
+                        chosenUsername = account::originalUsername;
+                        chosenGJP2 = account::originalGJP2;
+                        // if no GJP2 stored, try to find it in file
+                        if (chosenGJP2.empty()) {
+                              for (auto const& a : accounts) {
+                                    if (auto s = a["username"].asString(); s && s.unwrap() == chosenUsername) {
+                                          if (auto g = a["gjp2"].asString(); g) chosenGJP2 = g.unwrap();
+                                          break;
+                                    }
+                              }
+                        }
+                  } else if (!accounts.empty()) {
+                        // if only one account, use that instead yea
+                        if (auto u = accounts[0]["username"].asString(); u) chosenUsername = u.unwrap();
+                        if (auto g = accounts[0]["gjp2"].asString(); g) chosenGJP2 = g.unwrap();
+                  } else {
+                        // last resort
                         chosenUsername = this->m_username;
                         chosenGJP2 = this->m_GJP2;
-                        log::warn("Account invaild for switch, reverting to current account {}", chosenUsername);
-                        Notification::create("Account Switch failed, reverting to " + chosenUsername + ".", NotificationIcon::Error)->show();
                   }
 
-                  this->addDLToActive(tagChar);
-                  this->linkToAccount(chosenUsername, chosenGJP2, accountID, userID);
-                  log::debug("linkToAccount called with username={} accountID={} userID={}", chosenUsername, accountID, userID);
-                  linked = true;
+                  if (chosenUsername.empty()) {
+                        log::warn("Account invalid for switch, no credentials available to link");
+                        Notification::create("Account Switch failed: no credentials available.", NotificationIcon::Error)->show();
+                        linked = false;
+                  } else {
+                        this->linkToAccount(chosenUsername, chosenGJP2, accountID, userID);
+                        log::debug("linkToAccount called with username={} accountID={} userID={}", chosenUsername, accountID, userID);
+                        linked = true;
+
+                        // clear pending/original saved credentials
+                        account::pendingUsername.clear();
+                        account::pendingGJP2.clear();
+                        account::originalUsername.clear();
+                        account::originalGJP2.clear();
+                        account::originalAccountID = 0;
+                        account::originalUserID = 0;
+                  }
+
+                  // clear pending/original saved credentials
+                  account::pendingUsername.clear();
+                  account::pendingGJP2.clear();
+                  account::originalUsername.clear();
+                  account::originalGJP2.clear();
+                  account::originalAccountID = 0;
+                  account::originalUserID = 0;
             } else {
                   log::warn("Failed to parse login response '{}'", response);
+                  linked = false;
+                  account::isSwitchingAccount = false;
+            }
+
+            if (linked) {
+                  log::debug("account switch to {} complete", chosenUsername);
+                  Notification::create(std::string("Switched to ") + chosenUsername, NotificationIcon::Success)->show();
+                  account::isSwitchingAccount = false;
             }
 
             if (!linked) {
                   log::debug("no account/user IDs found to link");
+
+                  // clear any pending requested switch
+                  account::pendingUsername.clear();
+                  account::pendingGJP2.clear();
+
+                  // attempt to revert to the original account
+                  if (!account::originalUsername.empty() && !account::originalGJP2.empty()) {
+                        log::info("Reverting to original account {}", account::originalUsername);
+                        this->unlinkFromAccount();
+                        this->loginAccount(account::originalUsername, account::originalGJP2);
+                        Notification::create("Account Switch failed, reverting to " + account::originalUsername + ".", NotificationIcon::Error)->show();
+                        account::isSwitchingAccount = false;
+
+
+                        return;
+                  } else {
+                        log::warn("No original credentials available to revert to");
+                        Notification::create("Account Switch failed and no original account to revert to.", NotificationIcon::Error)->show();
+                        account::isSwitchingAccount = false;
+                        return;
+                  }
             }
       }
 };
