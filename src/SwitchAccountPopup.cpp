@@ -268,7 +268,7 @@ void SwitchAccountPopup::onAdd(CCObject* sender) {
                                                if (foundIndex < m_gjp2s.size()) {
                                                      m_gjp2s[foundIndex] = gjp2;
                                                }
-                                               Notification::create(std::string("Overwrote account ") + username, NotificationIcon::Success)->show();
+                                               Notification::create(std::string("Overwrote account ") + std::string(username.c_str()), NotificationIcon::Success)->show();
                                                log::info("Overwrote account {}", username);
                                          } else {
                                                Notification::create("Account overwrite failed: verification mismatch.", NotificationIcon::Error)->show();
@@ -322,7 +322,7 @@ void SwitchAccountPopup::onAdd(CCObject* sender) {
                                          log::info("Added account {}", username);
                                          // append to UI
                                          this->addAccountRow(username, gjp2, false);
-                                         Notification::create(std::string("Added account ") + username, NotificationIcon::Success)->show();
+                                         Notification::create(std::string("Added account ") + std::string(username.c_str()), NotificationIcon::Success)->show();
                                    } else {
                                          Notification::create("Account add failed: verification mismatch.", NotificationIcon::Error)->show();
                                          log::warn("Account {} not found after write verification", username);
@@ -352,7 +352,7 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
       gd::string gjp2 = m_gjp2s.size() > idx ? m_gjp2s[idx] : "";
 
       {
-            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + username + "</c>'?"
+            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + std::string(username.c_str()) + "</c>'?"
                   "\n<cy>This will log out your current account, delete account data on this device and log in to the selected account.</c>"
                   "\n<cr>Be sure to save your current account's data before switching!</c>";
             createQuickPopup("Switch Account", msg,
@@ -419,7 +419,7 @@ void SwitchAccountPopup::onDelete(CCObject* sender) {
 
       gd::string username = m_usernames.size() > idx ? m_usernames[idx] : "";
 
-      std::string msg = std::string("Are you sure you want to remove account '<cg>") + username + "</c>'?\n<cy>This will remove it from the accounts list.</c>";
+      std::string msg = std::string("Are you sure you want to remove account '<cg>") + std::string(username.c_str()) + "</c>'?\n<cy>This will remove it from the accounts list.</c>";
       createQuickPopup("Remove Account", msg, "No", "Remove", [this, idx, username, btn](FLAlertLayer*, bool yes) {
             if (!yes) return;
 
@@ -498,7 +498,7 @@ void SwitchAccountPopup::onDelete(CCObject* sender) {
                   --m_currentAccountIndex;
             }
 
-            Notification::create(std::string("Deleted account ") + username, NotificationIcon::Success)->show();
+            Notification::create(std::string("Deleted account ") + std::string(username.c_str()), NotificationIcon::Success)->show();
             log::info("Deleted account {}", username);
       });
 }
