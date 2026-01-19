@@ -163,8 +163,6 @@ class $modify(AWGJAccountManager, GJAccountManager) {
                         this->loginAccount(account::originalUsername, account::originalGJP2);
                         Notification::create("Account Switch failed, reverting to " + account::originalUsername + ".", NotificationIcon::Error)->show();
                         account::isSwitchingAccount = false;
-
-
                         return;
                   } else {
                         log::warn("No original credentials available to revert to");
