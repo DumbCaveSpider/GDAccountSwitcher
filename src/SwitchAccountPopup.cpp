@@ -135,7 +135,8 @@ void SwitchAccountPopup::addAccountRow(const std::string& username, const std::s
       // create delete button sprite
       auto delSpr = CCSprite::createWithSpriteFrameName("GJ_deleteSongBtn_001.png");
       auto delBtn = CCMenuItemSpriteExtra::create(delSpr, this, menu_selector(SwitchAccountPopup::onDelete));
-      auto dmenu = CCMenu::create(delBtn, nullptr);
+      auto dmenu = CCMenu::create();
+      dmenu->addChild(delBtn);
       dmenu->setPosition({row->getContentSize().width - 80.f, row->getContentSize().height / 2});
       dmenu->setAnchorPoint({0.f, 0.5f});
       row->addChild(dmenu);
@@ -144,7 +145,8 @@ void SwitchAccountPopup::addAccountRow(const std::string& username, const std::s
       auto normalSpr = CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png");
       auto onSpr = CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png");
       auto selectBtn = CCMenuItemSpriteExtra::create(normalSpr, this, menu_selector(SwitchAccountPopup::onSelect));
-      auto smenu = CCMenu::create(selectBtn, nullptr);
+      auto smenu = CCMenu::create();
+      smenu->addChild(selectBtn);
       smenu->setPosition({row->getContentSize().width - 30.f, row->getContentSize().height / 2});
       smenu->setAnchorPoint({0.f, 0.5f});
       row->addChild(smenu);
