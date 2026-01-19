@@ -3,6 +3,7 @@
 #include <Geode/Geode.hpp>
 #include <functional>
 #include <matjson.hpp>
+
 #include "PendingSwitch.hpp"
 
 using namespace geode::prelude;
@@ -321,7 +322,7 @@ void SwitchAccountPopup::onAdd(CCObject* sender) {
                                    if (found) {
                                          log::info("Added account {}", username);
                                          // append to UI
-                                         this->addAccountRow(username, gjp2, false);
+                                         this->addAccountRow(username, gjp2, true);
                                          Notification::create(std::string("Added account ") + std::string(username.c_str()), NotificationIcon::Success)->show();
                                    } else {
                                          Notification::create("Account add failed: verification mismatch.", NotificationIcon::Error)->show();
@@ -352,9 +353,10 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
       gd::string gjp2 = m_gjp2s.size() > idx ? m_gjp2s[idx] : "";
 
       {
-            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + std::string(username.c_str()) + "</c>'?"
-                  "\n<cy>This will log out your current account, delete account data on this device and log in to the selected account.</c>"
-                  "\n<cr>Be sure to save your current account's data before switching!</c>";
+            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + std::string(username.c_str()) +
+                              "</c>'?"
+                              "\n<cy>This will log out your current account, delete account data on this device and log in to the selected account.</c>"
+                              "\n<cr>Be sure to save your current account's data before switching!</c>";
             createQuickPopup("Switch Account", msg,
                              "No", "Switch", [this, idx, username, gjp2](FLAlertLayer*, bool yes) {
                                    if (!yes) return;
@@ -374,12 +376,12 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
                                          if (newBtn) {
                                                newBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png"));
                                                newBtn->setEnabled(false);
-                                          }
-                                          m_currentAccountIndex = idx;
-                                    }
-                                    
-                                    log::info("switching to account {}", username);
-                                    account::isSwitchingAccount = true;
+                                         }
+                                         m_currentAccountIndex = idx;
+                                   }
+
+                                   log::info("switching to account {}", username);
+                                   account::isSwitchingAccount = true;
 
                                    auto gjam = GJAccountManager::sharedState();
 
@@ -388,7 +390,7 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
                                    account::originalGJP2 = gjam->m_GJP2;
                                    account::originalAccountID = gjam->m_accountID;
                                    account::originalUserID = GameLevelManager::sharedState()->userIDForAccountID(gjam->m_accountID);
-                                    log::debug("stored original account: {} {} {}", account::originalUsername, account::originalGJP2, account::originalAccountID, account::originalUserID);
+                                   log::debug("stored original account: {} {} {}", account::originalUsername, account::originalGJP2, account::originalAccountID, account::originalUserID);
                                    gjam->unlinkFromAccount();
 
                                    // mark pending switch so the login callback knows which account
@@ -397,8 +399,6 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
 
                                    gjam->loginAccount(username, gjp2);
                                    log::debug("{}: {} {} {}", username, gjp2, gjam->m_accountID, GameLevelManager::sharedState()->userIDForAccountID(gjam->m_accountID));
-
-                                   
                              });
       }
 }
@@ -498,7 +498,7 @@ void SwitchAccountPopup::onDelete(CCObject* sender) {
                   --m_currentAccountIndex;
             }
 
-            Notification::create(std::string("Deleted account ") + std::string(username.c_str()), NotificationIcon::Success)->show();
-            log::info("Deleted account {}", username);
+            Notification::create(std::string("Removed account ") + std::string(username.c_str()), NotificationIcon::Success)->show();
+            log::info("Removed account {}", username);
       });
 }

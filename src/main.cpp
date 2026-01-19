@@ -27,7 +27,7 @@ class $modify(AWAccountHelpLayer, AccountHelpLayer) {
                   }
             }
 
-            auto btnSpr = ButtonSprite::create("Switch Account", 162.f, true, "goldFont.fnt", "GJ_button_01.png", .0f, 1.f);
+            auto btnSpr = ButtonSprite::create("Switch Account", 160.f, true, "goldFont.fnt", "GJ_button_01.png", .0f, 1.f);
             auto btn = CCMenuItemSpriteExtra::create(
                 btnSpr,
                 this,
