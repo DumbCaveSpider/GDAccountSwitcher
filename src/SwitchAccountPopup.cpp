@@ -419,8 +419,8 @@ void SwitchAccountPopup::onDelete(CCObject* sender) {
 
       gd::string username = m_usernames.size() > idx ? m_usernames[idx] : "";
 
-      std::string msg = std::string("Are you sure you want to delete account '<cg>") + username + "</c>'?\n<cy>This will remove it from local storage.</c>";
-      createQuickPopup("Delete Account", msg, "No", "Delete", [this, idx, username, btn](FLAlertLayer*, bool yes) {
+      std::string msg = std::string("Are you sure you want to remove account '<cg>") + username + "</c>'?\n<cy>This will remove it from the accounts list.</c>";
+      createQuickPopup("Remove Account", msg, "No", "Remove", [this, idx, username, btn](FLAlertLayer*, bool yes) {
             if (!yes) return;
 
             // remove from file
@@ -472,6 +472,7 @@ void SwitchAccountPopup::onDelete(CCObject* sender) {
 
             matjson::Value root = matjson::Value::object();
             root["accounts"] = accounts;
+            if (auto r = geode::utils::file::writeToJson(path, root); !r) {
             if (auto r = geode::utils::file::writeToJson(path, root); !r) {
                   Notification::create("Failed to save accounts file.", NotificationIcon::Error)->show();
                   log::warn("Failed to write accounts file");
