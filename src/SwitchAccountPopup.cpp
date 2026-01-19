@@ -3,6 +3,7 @@
 #include <Geode/Geode.hpp>
 #include <functional>
 #include <matjson.hpp>
+#include "PendingSwitch.hpp"
 
 using namespace geode::prelude;
 
@@ -162,6 +163,7 @@ void SwitchAccountPopup::addAccountRow(const std::string& username, const std::s
       if (toggleDefault) {
             selectBtn->setSprite(onSpr);
             selectBtn->setEnabled(false);
+            delBtn->setColor({100, 100, 100});
             delBtn->setEnabled(false);  // don't allow deleting current logged-in account
             m_currentAccountIndex = index;
       } else {
@@ -355,12 +357,14 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
       gd::string gjp2 = m_gjp2s.size() > idx ? m_gjp2s[idx] : "";
 
       {
-            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + username + "</c>'?\n<cy>This will log out your current account and log in to the selected account.</c>\n<cr>Be sure to save your current account's data before switching!</c>";
+            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + username + "</c>'?"
+                  "\n<cy>This will log out your current account, delete account data on this device and log in to the selected account.</c>"
+                  "\n<cr>Be sure to save your current account's data before switching!</c>";
             createQuickPopup("Switch Account", msg,
                              "No", "Switch", [this, idx, username, gjp2](FLAlertLayer*, bool yes) {
                                    if (!yes) return;
 
-                                   // perform UI update: previous current -> normal and enabled
+                                   // previous current -> normal and enabled
                                    if (m_currentAccountIndex != SIZE_MAX && m_currentAccountIndex < m_selectButtons.size()) {
                                          auto prevBtn = m_selectButtons[m_currentAccountIndex];
                                          if (prevBtn) {
@@ -379,16 +383,20 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
                                          m_currentAccountIndex = idx;
                                    }
 
-                                   log::info("Requested switch to account {}", username);
+                                   log::info("switching to account {}", username);
 
                                    auto gjam = GJAccountManager::sharedState();
                                    // logout current account
                                    gjam->unlinkFromAccount();
-                                   // login to account (this will handle the syncing)
+
+                                   // mark pending switch so the login callback
+                                   account_switcher::pendingUsername = username;
+                                   account_switcher::pendingGJP2 = gjp2;
+
                                    gjam->loginAccount(username, gjp2);
                                    log::debug("{}: {} {} {}", username, gjp2, gjam->m_accountID, GameLevelManager::sharedState()->userIDForAccountID(gjam->m_accountID));
-
                                    Notification::create(std::string("Switched to ") + username, NotificationIcon::Success)->show();
+                                   
                              });
       }
 }
