@@ -352,9 +352,9 @@ void SwitchAccountPopup::onSelect(CCObject* sender) {
       gd::string gjp2 = m_gjp2s.size() > idx ? m_gjp2s[idx] : "";
 
       {
-            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + std::string(username.c_str()) + std::string("</c>'?"
+            std::string msg = std::string("Are you sure you want to switch to account '<cg>") + username + "</c>'?"
                   "\n<cy>This will log out your current account, delete account data on this device and log in to the selected account.</c>"
-                  "\n<cr>Be sure to save your current account's data before switching!</c>");
+                  "\n<cr>Be sure to save your current account's data before switching!</c>";
             createQuickPopup("Switch Account", msg,
                              "No", "Switch", [this, idx, username, gjp2](FLAlertLayer*, bool yes) {
                                    if (!yes) return;
@@ -419,7 +419,7 @@ void SwitchAccountPopup::onDelete(CCObject* sender) {
 
       gd::string username = m_usernames.size() > idx ? m_usernames[idx] : "";
 
-      std::string msg = std::string("Are you sure you want to delete account '<cg>") + std::string(username.c_str()) + "</c>'?\n<cy>This will remove it from local storage.</c>";
+      std::string msg = std::string("Are you sure you want to delete account '<cg>") + username + "</c>'?\n<cy>This will remove it from local storage.</c>";
       createQuickPopup("Delete Account", msg, "No", "Delete", [this, idx, username, btn](FLAlertLayer*, bool yes) {
             if (!yes) return;
 
