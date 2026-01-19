@@ -473,7 +473,6 @@ void SwitchAccountPopup::onDelete(CCObject* sender) {
             matjson::Value root = matjson::Value::object();
             root["accounts"] = accounts;
             if (auto r = geode::utils::file::writeToJson(path, root); !r) {
-            if (auto r = geode::utils::file::writeToJson(path, root); !r) {
                   Notification::create("Failed to save accounts file.", NotificationIcon::Error)->show();
                   log::warn("Failed to write accounts file");
                   return;
