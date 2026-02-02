@@ -16,9 +16,7 @@ class $modify(AWAccountHelpLayer, AccountHelpLayer) {
             if (!menu) {
                   log::warn("geode said that the dropdown menu wasnt found lol");
                   if (auto children = m_mainLayer->getChildren()) {
-                        CCObject* iterationOnASingleCCMenuThatShouldveBeenEasyToGet = nullptr;
-                        CCARRAY_FOREACH(children, iterationOnASingleCCMenuThatShouldveBeenEasyToGet) {
-                              CCNode* node = static_cast<CCNode*>(iterationOnASingleCCMenuThatShouldveBeenEasyToGet);
+                        for (auto node : CCArrayExt<CCNode*>(children)) {
                               if (auto m = typeinfo_cast<CCMenu*>(node)) {
                                     menu = m;
                                     break;

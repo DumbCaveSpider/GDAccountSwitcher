@@ -10,7 +10,7 @@ using namespace geode::prelude;
 
 SwitchAccountPopup* SwitchAccountPopup::create() {
       auto ret = new SwitchAccountPopup();
-      if (ret && ret->initAnchored(400.f, 300.f)) {
+      if (ret && ret->init()) {
             ret->autorelease();
             return ret;
       }
@@ -18,7 +18,9 @@ SwitchAccountPopup* SwitchAccountPopup::create() {
       return nullptr;
 }
 
-bool SwitchAccountPopup::setup() {
+bool SwitchAccountPopup::init() {
+      if (!Popup::init(400.f, 300.f)) return false;
+
       setTitle("Switch Online Account");
       m_noElasticity = true;
       // remove close button
@@ -83,6 +85,11 @@ bool SwitchAccountPopup::setup() {
             if (auto r = acc["username"].asString(); r) uname = r.unwrap();
             std::string gjp2 = "";
             if (auto r = acc["gjp2"].asString(); r) gjp2 = r.unwrap();
+
+            // skip entries without a valid username or missing gjp2
+            if (uname.empty() || gjp2.empty()) {
+                  continue;
+            }
 
             this->addAccountRow(uname, gjp2, uname == currentUsername);
       }

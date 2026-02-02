@@ -8,12 +8,12 @@ using namespace geode::prelude;
 class CCMenuItemSpriteExtra;
 class CCMenuItemToggler;
 
-class SwitchAccountPopup : public geode::Popup<> {
+class SwitchAccountPopup : public geode::Popup {
      public:
       static SwitchAccountPopup* create();
 
      protected:
-      bool setup() override;
+      bool init() override;
 
      private:
       void onAdd(CCObject* sender);
