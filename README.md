@@ -14,7 +14,7 @@ This mod allows you to store <cl>multiple accounts</c> locally and switch betwee
 
 ### Disclaimer
 
-### <cr>![❗](frame:info-alert.png?scale=0.45) By using this mod, you acknowledge that your **GJP2 (encrypted password)** will be used in this mod and are stored locally and used to log in when switching accounts. If you do not wish to store this password anywhere, **Do not use this mod**.</c>
+### <cr>By using this mod, you acknowledge that your **GJP2 (encrypted password)** will be used in this mod and are stored locally and used to log in when switching accounts. If you do not wish to store this password anywhere, **Do not use this mod**.</c>
 ---
 ### Credits
 - *Mod Suggested by [ATMX](user:10092120)*
