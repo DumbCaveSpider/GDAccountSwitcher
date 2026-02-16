@@ -1,5 +1,5 @@
 {
-	"geode": "5.0.0-alpha.1",
+	"geode": "5.0.0-beta.2",
 	"gd": {
 		"win": "2.2081",
 		"android": "2.2081",
@@ -8,7 +8,7 @@
 	},
 	"id": "arcticwoof.account_switcher",
 	"name": "Account Switcher",
-	"version": "v1.0.0",
+	"version": "v1.0.1",
 	"developer": "ArcticWoof",
 	"description": "Switch between your GD accounts",
 	"links": {
@@ -21,9 +21,6 @@
 		"enhancement"
 	], 
 	"dependencies": {
-		"geode.node-ids": {
-			"importance": "required",
-			"version": ">=1.0.0"
-		}
+		"geode.node-ids": ">=1.0.0"
 	}
 }
