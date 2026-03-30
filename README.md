@@ -22,6 +22,6 @@ To use this mod, go to the <co>Account Settings</c> and under <cg>'More'</c>, yo
 
 ### Credits
 
-- *Mod Suggested by [ATMX](user:10092120)*
+- _Mod Suggested by [ATMX](user:10092120)_
 
 ![King Clawthorne](arcticwoof.rated_layouts/king.png)
