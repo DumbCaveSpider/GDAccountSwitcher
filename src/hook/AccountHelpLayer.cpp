@@ -1,7 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/AccountHelpLayer.hpp>
 
-#include "SwitchAccountPopup.hpp"
+#include "../SwitchAccountPopup.hpp"
 
 using namespace geode::prelude;
 

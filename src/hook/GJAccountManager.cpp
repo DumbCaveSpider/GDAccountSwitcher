@@ -1,7 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/GJAccountManager.hpp>
 #include <matjson.hpp>
-#include "../PendingSwitch.hpp"
+#include "../include/PendingSwitch.hpp"
 
 using namespace geode::prelude;
 using namespace geode::utils;

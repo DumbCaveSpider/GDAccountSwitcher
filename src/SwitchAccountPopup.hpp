@@ -3,12 +3,9 @@
 #include <Geode/Geode.hpp>
 #include <cue/ListNode.hpp>
 #include <vector>
+#include "AccountNode.hpp"
 
 using namespace geode::prelude;
-
-class CCMenuItemSpriteExtra;
-class CCMenuItemToggler;
-
 class SwitchAccountPopup : public geode::Popup {
 public:
     static SwitchAccountPopup* create();
@@ -18,18 +15,20 @@ protected:
 
 private:
     void onAdd(CCObject* sender);
-    void onSelect(CCObject* sender);
-    void onDelete(CCObject* sender);
     void onInfo(CCObject* sender);
     void onShowSavedFolder(CCObject* sender);
+
+    void onAccountNodeSelect(AccountNode* node);
+    void onAccountNodeDelete(AccountNode* node);
     void addAccountRow(const std::string& username, const std::string& gjp2, bool isCurrent = false);
 
     // per-row select buttons
-    std::vector<CCMenuItemSpriteExtra*> m_selectButtons;
-    std::vector<CCMenuItemSpriteExtra*> m_deleteButtons;
-    std::vector<std::string> m_usernames;
-    std::vector<std::string> m_gjp2s;
+    std::vector<AccountNode*> m_accountNodes;
 
     cue::ListNode* m_listLayer = nullptr;
-    size_t m_currentAccountIndex = SIZE_MAX;
+    AccountNode* m_currentAccountNode = nullptr;
+
+    void clearAccountRows();
+    void reloadAccountRows();
+    void updateListLayerSize();
 };

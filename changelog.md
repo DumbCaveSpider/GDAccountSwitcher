@@ -1,3 +1,8 @@
+## v1.0.3
+
+- Fixed a bug where the scroll layer isn't properly updating
+- Refactored the code and internal changes
+
 ## v1.0.2
 
 - Replace the old scrolling code to use cue's list node
