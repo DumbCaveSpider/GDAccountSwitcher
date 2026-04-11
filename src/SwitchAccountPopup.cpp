@@ -141,10 +141,10 @@ void SwitchAccountPopup::onShowSavedFolder(CCObject* sender) {
 void SwitchAccountPopup::onInfo(CCObject* sender) {
     FLAlertLayer::create(
         "How to use",
-        "Login to your <cy>current account</c>, then click <cg>Add</c> to store "
+        "Log in to your <cy>current account</c>, then click <cg>Add</c> to store "
         "it locally.\nTo switch accounts, simply click the <cg>Use</c> button "
-        "next to the desired account.\nThe game will <cr>log out your current "
-        "account</c> and <cg>log back in to the selected account</c> "
+        "next to the desired account.\nThe game will <cr>log out of your current "
+        "account</c> and <cg>log back into the selected account</c> "
         "automatically.",
         "OK")
         ->show();

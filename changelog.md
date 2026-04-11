@@ -1,3 +1,7 @@
+## v1.0.4
+
+- Fixed typo in the about mod page
+
 ## v1.0.3
 
 - Fixed a bug where the scroll layer isn't properly updating
