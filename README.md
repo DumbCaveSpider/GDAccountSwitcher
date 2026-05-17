@@ -16,7 +16,7 @@ To use this mod, go to the <co>Account Settings</c> and under <cg>'More'</c>, yo
 
 ### Disclaimer
 
-<cr>By using this mod, you acknowledge that your **GJP2 (encrypted password)** will be used in this mod and is stored locally and used to log in when switching accounts. If you do not wish to store this password anywhere, **Do not use this mod**.</c>
+<cr>By using this mod, you acknowledge that your **GJP2 (encrypted password)** will be used in this mod and is stored locally (On your laptop) and will be used to log in when switching accounts. If you do not wish to store this password anywhere, **Do not use this mod**.</c>
 
 ---
 
