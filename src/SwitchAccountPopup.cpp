@@ -4,7 +4,8 @@
 #include <cue/ListNode.hpp>
 #include <matjson.hpp>
 
-#include "include/PendingSwitch.hpp"
+#include "AccountSwitch.hpp"
+#include "SwitchLoadingLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -39,24 +40,49 @@ bool SwitchAccountPopup::init() {
 
     this->reloadAccountRows();
 
-    // add button
-    auto addBtn = CCMenuItemSpriteExtra::create(
-        ButtonSprite::create("Add", "goldFont.fnt", "GJ_button_01.png"), this, menu_selector(SwitchAccountPopup::onAdd));
-    m_buttonMenu->addChild(addBtn);
-    addBtn->setPosition({m_mainLayer->getContentSize().width / 2 + 70, 25.f});
+    auto bottomRow = CCNode::create();
+    bottomRow->setID("bottom-row");
+    bottomRow->setAnchorPoint({0.5f, 0.5f});
+    bottomRow->setContentSize({m_mainLayer->getContentSize().width - 40.f, 40.f});
+    bottomRow->setLayout(
+        RowLayout::create()
+            ->setGap(5.f)
+            ->setAutoScale(false));
 
     // cancel button
-    auto cancelBtn = CCMenuItemSpriteExtra::create(
-        ButtonSprite::create("Cancel", "goldFont.fnt", "GJ_button_06.png"), this, menu_selector(SwitchAccountPopup::onClose));
-    m_buttonMenu->addChild(cancelBtn);
-    cancelBtn->setPosition({m_mainLayer->getContentSize().width / 2 - 50, 25.f});
+    auto cancelBtn = Button::createWithNode(
+        ButtonSprite::create("Cancel", "goldFont.fnt", "GJ_button_06.png"),
+        [this](Button* btn) { this->onClose(btn); });
+    cancelBtn->setID("cancel-button");
+    bottomRow->addChild(cancelBtn);
+
+    // add button
+    auto addBtn = Button::createWithNode(
+        ButtonSprite::create("Add", "goldFont.fnt", "GJ_button_01.png"),
+        [this](Button* btn) { this->onAdd(btn); });
+    addBtn->setID("add-button");
+    bottomRow->addChild(addBtn);
+
+    bottomRow->updateLayout();
+    m_mainLayer->addChildAtPosition(bottomRow, Anchor::Bottom, {0.f, 25.f});
+
+    // mod settings
+    auto settingsBtnSpr = CircleButtonSprite::createWithSpriteFrameName(  // @geode-ignore(unknown-resource)
+        "geode.loader/settings.png",
+        1.f,
+        CircleBaseColor::Green,
+        CircleBaseSize::Tiny);
+    auto settingsBtn = Button::createWithNode(settingsBtnSpr, [](Button*) {
+        openSettingsPopup(Mod::get());
+    });
+    settingsBtn->setID("settings-button");
+    m_mainLayer->addChildAtPosition(settingsBtn, Anchor::TopLeft, {50.f, -20.f});
 
     // info button
-    auto infoBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(SwitchAccountPopup::onInfo));
-    m_buttonMenu->addChild(infoBtn);
-    infoBtn->setPosition({m_mainLayer->getContentSize().width - 20.f,
-        m_mainLayer->getContentSize().height - 20.f});
+    auto infoBtn = Button::createWithSpriteFrameName(
+        "GJ_infoIcon_001.png",
+        [this](Button* btn) { this->onInfo(btn); });
+    m_mainLayer->addChildAtPosition(infoBtn, Anchor::TopRight, {-20.f, -20.f});
 
     // show saved files
     auto saveBtnSpr = CircleButtonSprite::
@@ -64,13 +90,10 @@ bool SwitchAccountPopup::init() {
             "geode.loader/save.png",
             1.f,
             CircleBaseColor::Green,
-            CircleBaseSize::Medium);
-    saveBtnSpr->setScale(0.55f);
-    auto saveBtn = CCMenuItemSpriteExtra::create(
-        saveBtnSpr, this, menu_selector(SwitchAccountPopup::onShowSavedFolder));
-    saveBtn->setPosition({20.f, m_mainLayer->getContentSize().height - 20.f});
-    m_buttonMenu->addChild(saveBtn);
-
+            CircleBaseSize::Tiny);
+    auto saveBtn = Button::createWithNode(
+        saveBtnSpr, [this](Button* btn) { this->onShowSavedFolder(btn); });
+    m_mainLayer->addChildAtPosition(saveBtn, Anchor::TopLeft, {20.f, -20.f});
 
     return true;
 }
@@ -87,10 +110,10 @@ void SwitchAccountPopup::clearAccountRows() {
 void SwitchAccountPopup::reloadAccountRows() {
     clearAccountRows();
 
-    auto path = geode::dirs::getModsSaveDir() / geode::Mod::get()->getID() / "accounts.json";
+    auto path = dirs::getModsSaveDir() / Mod::get()->getID() / "accounts.json";
 
     matjson::Value doc = matjson::Value::object();
-    if (auto res = geode::utils::file::readJson(path); res) {
+    if (auto res = utils::file::readJson(path); res) {
         doc = res.unwrap();
     }
 
@@ -129,13 +152,13 @@ void SwitchAccountPopup::reloadAccountRows() {
 
         this->addAccountRow(uname, gjp2, uname == currentUsername);
     }
-    
+
     m_listLayer->getScrollLayer()->scrollToTop();
 }
 
 void SwitchAccountPopup::onShowSavedFolder(CCObject* sender) {
-    auto path = geode::dirs::getModsSaveDir() / geode::Mod::get()->getID();
-    geode::utils::file::openFolder(path);
+    auto path = dirs::getModsSaveDir() / Mod::get()->getID();
+    utils::file::openFolder(path);
 }
 
 void SwitchAccountPopup::onInfo(CCObject* sender) {
@@ -169,11 +192,12 @@ void SwitchAccountPopup::addAccountRow(const std::string& username,
     auto cell = cue::ListCell::create(node, m_listLayer);
     m_listLayer->addListCell(cell);
     m_accountNodes.push_back(node);
+    if (toggleDefault) m_currentAccountNode = node;
 }
 
 void SwitchAccountPopup::onAdd(CCObject* sender) {
     // ask for confirmation and append the new account on yes
-    auto path = geode::dirs::getModsSaveDir() / geode::Mod::get()->getID() /
+    auto path = dirs::getModsSaveDir() / Mod::get()->getID() /
                 "accounts.json";
 
     createQuickPopup(
@@ -200,7 +224,7 @@ void SwitchAccountPopup::onAdd(CCObject* sender) {
 
             // re-read in case file changed
             matjson::Value doc = matjson::Value::object();
-            if (auto res = geode::utils::file::readJson(path); res) {
+            if (auto res = utils::file::readJson(path); res) {
                 doc = res.unwrap();
             }
 
@@ -221,7 +245,7 @@ void SwitchAccountPopup::onAdd(CCObject* sender) {
                 accounts.push_back(accountsVal);
             }
 
-            // check duplicate now (race-safe) and overwrite if found
+            // check duplicate now and overwrite if found
             size_t foundIndex = SIZE_MAX;
             for (size_t i = 0; i < accounts.size(); ++i) {
                 if (auto r = accounts[i]["username"].asString();
@@ -246,7 +270,7 @@ void SwitchAccountPopup::onAdd(CCObject* sender) {
                     // verify write by re-reading file and checking gjp2
                     matjson::Value verifyDoc = matjson::Value::object();
                     bool verified = false;
-                    if (auto vr = geode::utils::file::readJson(path); vr) {
+                    if (auto vr = utils::file::readJson(path); vr) {
                         verifyDoc = vr.unwrap();
                         matjson::Value vAccounts;
                         if (verifyDoc.contains("accounts")) {
@@ -316,7 +340,7 @@ void SwitchAccountPopup::onAdd(CCObject* sender) {
                 // verify write by re-reading file
                 matjson::Value verifyDoc = matjson::Value::object();
                 bool found = false;
-                if (auto vr = geode::utils::file::readJson(path); vr) {
+                if (auto vr = utils::file::readJson(path); vr) {
                     verifyDoc = vr.unwrap();
                     matjson::Value vAccounts;
                     if (verifyDoc.contains("accounts")) {
@@ -363,48 +387,66 @@ void SwitchAccountPopup::onAdd(CCObject* sender) {
 }
 
 void SwitchAccountPopup::onAccountNodeSelect(AccountNode* node) {
-    if (!node || node == m_currentAccountNode)
+    if (!node || node == m_currentAccountNode || account::isSwitching())
         return;
-
-    if (m_currentAccountNode) {
-        m_currentAccountNode->setCurrent(false);
-    }
-
-    node->setCurrent(true);
-    m_currentAccountNode = node;
 
     auto username = node->getUsername();
     auto gjp2 = node->getGjp2();
+    auto options = getSwitchOptions();
 
     std::string msg =
         std::string("Are you sure you want to switch to account '<cg>") +
         username +
         "</c>'?"
-        "\n<cy>This will log out your current account, delete account data on "
-        "this device and log in to the selected account.</c>"
-        "\n<cr>Be sure to save your current account's data to cloud before "
-        "switching!</c>";
+        "\n<cy>This will log out your current account and delete the data on this device.</c>";
+    msg += options.skipBackup
+        ? "\n<cr>Backup is skipped: any unsaved progress on this device will be lost!</c>"
+        : "\n<cg>Your current account's data will be saved to the cloud first</c> "
+          "<cr>(if that fails, the switch still continues).</c>";
+    msg += options.skipCloudLoad
+        ? "\n<cy>The selected account's cloud data won't be loaded.</c>"
+        : "\n<cg>The selected account's cloud data will be loaded afterwards.</c>";
     createQuickPopup(
         "Switch Account", msg, "No", "Switch", [this, username, gjp2](FLAlertLayer*, bool yes) {
             if (!yes)
                 return;
-
-            log::info("switching to account {}", username);
-            account::isSwitchingAccount = true;
-
-            auto gjam = GJAccountManager::sharedState();
-            account::originalUsername = gjam->m_username;
-            account::originalGJP2 = gjam->m_GJP2;
-            account::originalAccountID = gjam->m_accountID;
-            account::originalUserID =
-                GameLevelManager::sharedState()->userIDForAccountID(
-                    gjam->m_accountID);
-            gjam->unlinkFromAccount();
-
-            account::pendingUsername = username;
-            account::pendingGJP2 = gjp2;
-            gjam->loginAccount(username, gjp2);
+            this->startSwitch(username, gjp2);
         });
+}
+
+// read when the switch starts, so changing a setting mid-dialog still counts
+account::SwitchOptions SwitchAccountPopup::getSwitchOptions() {
+    return account::SwitchOptions{
+        .skipBackup = Mod::get()->getSettingValue<bool>("skip-backup"),
+        .skipCloudLoad = Mod::get()->getSettingValue<bool>("skip-load-data"),
+    };
+}
+
+void SwitchAccountPopup::startSwitch(std::string const& username, std::string const& gjp2) {
+    log::info("switching to account {}", username);
+
+    auto loading = SwitchLoadingLayer::create();
+    loading->setStatus(fmt::format("Switching to {}...", username));
+    loading->show();
+
+    WeakRef<SwitchLoadingLayer> weakLoading = loading;
+    WeakRef<SwitchAccountPopup> weakSelf = this;
+
+    bool started = account::startSwitch(
+        username,
+        gjp2,
+        getSwitchOptions(),
+        [weakLoading](std::string const& status) {
+            if (auto layer = weakLoading.lock()) layer->setStatus(status);
+        },
+        [weakLoading, weakSelf](bool) {
+            if (auto layer = weakLoading.lock()) layer->dismiss();
+            // rebuild from GJAccountManager's username, so the selected row
+            // always matches whichever account actually ended up linked
+            if (auto self = weakSelf.lock()) self->reloadAccountRows();
+        });
+
+    if (!started) loading->dismiss();
 }
 
 void SwitchAccountPopup::onAccountNodeDelete(AccountNode* node) {
@@ -422,10 +464,10 @@ void SwitchAccountPopup::onAccountNodeDelete(AccountNode* node) {
             if (!yes)
                 return;
 
-            auto path = geode::dirs::getModsSaveDir() / geode::Mod::get()->getID() / "accounts.json";
+            auto path = dirs::getModsSaveDir() / Mod::get()->getID() / "accounts.json";
 
             matjson::Value doc = matjson::Value::object();
-            if (auto res = geode::utils::file::readJson(path); res) {
+            if (auto res = utils::file::readJson(path); res) {
                 doc = res.unwrap();
             }
 
@@ -471,7 +513,7 @@ void SwitchAccountPopup::onAccountNodeDelete(AccountNode* node) {
 
             matjson::Value root = matjson::Value::object();
             root["accounts"] = accounts;
-            if (auto r = geode::utils::file::writeToJson(path, root); !r) {
+            if (auto r = utils::file::writeToJson(path, root); !r) {
                 Notification::create("Failed to save accounts file.", NotificationIcon::Error)->show();
                 log::warn("Failed to write accounts file");
                 return;

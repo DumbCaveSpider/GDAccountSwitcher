@@ -19,9 +19,6 @@ public:
 
     void setCurrent(bool isCurrent);
 
-    void onDeletePressed(CCObject* sender);
-    void onSelectPressed(CCObject* sender);
-
 private:
     bool init(const std::string& username,
         const std::string& gjp2,
@@ -34,5 +31,5 @@ private:
     bool m_isCurrent = false;
     Callback m_onDelete;
     Callback m_onSelect;
-    CCMenuItemSpriteExtra* m_selectButton = nullptr;
+    Button* m_selectButton = nullptr;
 };

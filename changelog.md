@@ -1,3 +1,10 @@
+## v1.0.5
+
+- Bump to Geode v6
+- Switching accounts now loads your cloud data automatically
+- Accounts now backups to cloud before switching
+- Added "Skip Backup" and "Skip Load Data" settings to the mod settings popup
+
 ## v1.0.4
 
 - Fixed typo in the about mod page

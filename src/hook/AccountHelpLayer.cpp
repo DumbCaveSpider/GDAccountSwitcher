@@ -9,39 +9,41 @@ class $modify(AWAccountHelpLayer, AccountHelpLayer) {
     void customSetup() {
         AccountHelpLayer::customSetup();
 
-        // i swear why does this->m_mainLayer->getChildByIDRecursive("hide-dropdown-menu") didnt apply at all wtf
-        // im screaming in angornyy
-        // ig this works fine tho
-        CCMenu* menu = typeinfo_cast<CCMenu*>(this->m_mainLayer->getChildByIDRecursive("hide-dropdown-menu"));
-        if (!menu) {
-            log::warn("geode said that the dropdown menu wasnt found lol");
-            if (auto children = m_mainLayer->getChildren()) {
-                for (auto node : CCArrayExt<CCNode*>(children)) {
-                    if (auto m = typeinfo_cast<CCMenu*>(node)) {
-                        menu = m;
-                        break;
-                    }
-                }
+        auto menu = m_buttonMenu;
+        if (!menu || !m_unlinkAccountButton || !m_refreshLoginButton) {
+            log::debug("buttons not found, skipping Switch Account button");
+            return;
+        }
+
+        constexpr float spacing = 45.f;
+        constexpr float shiftUp = 20.f;  // make room for a 4th button
+
+        CCNode* manageBtn = nullptr;
+        if (auto children = menu->getChildren()) {
+            auto idx = children->indexOfObject(m_unlinkAccountButton);
+            if (idx != CC_INVALID_INDEX && idx > 0) {
+                manageBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(children->objectAtIndex(idx - 1));
             }
         }
 
-        auto btnSpr = ButtonSprite::create("Switch Account", 160.f, true, "goldFont.fnt", "GJ_button_01.png", .0f, 1.f);
-        auto btn = CCMenuItemSpriteExtra::create(
-            btnSpr,
-            this,
-            menu_selector(AWAccountHelpLayer::onChangeAccount));
-
-        if (menu) {
-            menu->addChild(btn);
-            menu->setPositionY(menu->getPositionY() + 20);
-            if (CCMenuItem* backBtn = static_cast<CCMenuItem*>(menu->getChildByIndex(0)))  // this is terrible idea but ik that back button is always index 0 (i hope........)
-                backBtn->setPositionY(backBtn->getPositionY() - 20);
-            btn->setPosition({m_unlinkAccountButton->getPositionX(), m_unlinkAccountButton->getPositionY() - 45});
-            return;
+        for (CCNode* node : {static_cast<CCNode*>(m_refreshLoginButton), manageBtn, static_cast<CCNode*>(m_unlinkAccountButton)}) {
+            if (node) node->setPositionY(node->getPositionY() + shiftUp);
         }
+
+        auto parent = menu->getParent() ? menu->getParent() : m_mainLayer;
+        auto targetInMenu = m_unlinkAccountButton->getPosition() - CCPoint(0.f, spacing);
+        auto targetPos = parent->convertToNodeSpace(menu->convertToWorldSpace(targetInMenu));
+
+        auto btn = Button::createWithNode(
+            ButtonSprite::create("Switch Account", 160.f, true, "goldFont.fnt", "GJ_button_01.png", .0f, 1.f),
+            [this](Button*) { this->onChangeAccount(); });
+        btn->setID("switch-account-button"_spr);
+        btn->setPosition(targetPos);
+        btn->setZOrder(menu->getZOrder());
+        parent->addChild(btn);
     }
 
-    void onChangeAccount(CCObject* sender) {
+    void onChangeAccount() {
         // first time?
         if (!Mod::get()->getSavedValue<bool>("firstLaunch")) {
             FLAlertLayer::create(
@@ -53,7 +55,6 @@ class $modify(AWAccountHelpLayer, AccountHelpLayer) {
             return;
         }
         // open popup yes
-        auto popup = SwitchAccountPopup::create();
-        popup->show();
-    };
+        if (auto popup = SwitchAccountPopup::create()) popup->show();
+    }
 };

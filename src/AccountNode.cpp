@@ -33,27 +33,31 @@ bool AccountNode::init(const std::string& username,
     setContentSize({350.f, 50.f});
     setAnchorPoint({0, 0});
 
-    auto label = CCLabelBMFont::create(username.c_str(), "goldFont.fnt");
+    auto label = Label::create(username, "goldFont.fnt");
     label->setAnchorPoint({0.0f, 0.5f});
     label->setScale(0.9f);
     label->setPosition({15.f, 25.f});
     addChild(label);
 
-    auto delSpr = CCSprite::createWithSpriteFrameName("GJ_deleteSongBtn_001.png");
-    auto delBtn = CCMenuItemSpriteExtra::create(delSpr, this, menu_selector(AccountNode::onDeletePressed));
+    auto const centerY = getContentSize().height / 2;
 
-    auto normalSpr = CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png");
-    auto onSpr = CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png");
-    m_selectButton = CCMenuItemSpriteExtra::create(normalSpr, this, menu_selector(AccountNode::onSelectPressed));
+    auto delBtn = Button::createWithSpriteFrameName("GJ_deleteSongBtn_001.png", [this](Button*) {
+        if (m_onDelete) m_onDelete(this);
+    });
+    delBtn->setPosition({getContentSize().width - 80.f, centerY});
+    addChild(delBtn);
 
-    auto rowMenu = CCMenu::create();
-    rowMenu->addChild(delBtn);
-    rowMenu->addChild(m_selectButton);
-    rowMenu->setPosition({getContentSize().width - 80.f, getContentSize().height / 2});
-    rowMenu->setAnchorPoint({0.f, 0.5f});
-    delBtn->setPosition({0.f, 0.f});
-    m_selectButton->setPosition({50.f, 0.f});
-    addChild(rowMenu);
+    m_selectButton = Button::createWithSpriteFrameName("GJ_selectSongBtn_001.png", [this](Button*) {
+        if (m_onSelect) m_onSelect(this);
+    });
+    m_selectButton->setPosition({getContentSize().width - 30.f, centerY});
+    addChild(m_selectButton);
+
+    // rows live inside a scroll list, so let drags that start on a button scroll the list
+    for (auto btn : {delBtn, m_selectButton}) {
+        btn->setSwallowTouches(false);
+        btn->setDragCancelDistance(5.f);
+    }
 
     setCurrent(isCurrent);
 
@@ -66,20 +70,10 @@ void AccountNode::setCurrent(bool isCurrent) {
         return;
 
     if (isCurrent) {
-        m_selectButton->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png"));
+        m_selectButton->setDisplayNode(CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png"));
         m_selectButton->setEnabled(false);
     } else {
-        m_selectButton->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png"));
+        m_selectButton->setDisplayNode(CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png"));
         m_selectButton->setEnabled(true);
     }
-}
-
-void AccountNode::onDeletePressed(CCObject*) {
-    if (m_onDelete)
-        m_onDelete(this);
-}
-
-void AccountNode::onSelectPressed(CCObject*) {
-    if (m_onSelect)
-        m_onSelect(this);
 }

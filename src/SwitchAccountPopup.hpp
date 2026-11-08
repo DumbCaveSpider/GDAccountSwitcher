@@ -4,9 +4,10 @@
 #include <cue/ListNode.hpp>
 #include <vector>
 #include "AccountNode.hpp"
+#include "AccountSwitch.hpp"
 
 using namespace geode::prelude;
-class SwitchAccountPopup : public geode::Popup {
+class SwitchAccountPopup : public Popup {
 public:
     static SwitchAccountPopup* create();
 
@@ -20,9 +21,12 @@ private:
 
     void onAccountNodeSelect(AccountNode* node);
     void onAccountNodeDelete(AccountNode* node);
+    void startSwitch(std::string const& username, std::string const& gjp2);
     void addAccountRow(const std::string& username, const std::string& gjp2, bool isCurrent = false);
 
-    // per-row select buttons
+    // the "skip-backup" / "skip-load-data" mod settings
+    static account::SwitchOptions getSwitchOptions();
+
     std::vector<AccountNode*> m_accountNodes;
 
     cue::ListNode* m_listLayer = nullptr;
