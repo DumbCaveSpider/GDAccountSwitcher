@@ -248,7 +248,7 @@ namespace account {
             }
             gjam->m_activeDownloads->setObject(CCNode::create(), "bak_account");
 
-            setStatus(fmt::format("Finding {}'s save server...", g_state.originalUsername));
+            setStatus("Fetching Account Backup Server URL...");
             fetchAccountServer(kBackupServer, Stage::BackingUp, [](std::optional<std::string> url, std::string const& reason) {
                 if (!url) return finishBackup(false, reason);
                 uploadBackup(std::move(*url));
@@ -345,7 +345,7 @@ namespace account {
             gjam->m_activeDownloads->setObject(CCNode::create(), "sync_account");
             g_cloudListener.install();
 
-            setStatus(fmt::format("Finding {}'s save server...", g_state.targetUsername));
+            setStatus("Fetching Account Backup Server URL...");
             fetchAccountServer(kSyncServer, Stage::LoadingCloud, [](std::optional<std::string> url, std::string const& reason) {
                 if (!url) return finishCloudLoad(false, reason);
                 downloadSave(std::move(*url));
